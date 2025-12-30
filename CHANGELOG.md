@@ -1,3 +1,7 @@
+## 0.0.4
+
+- Add extension for build hook.
+
 ## 0.0.3
 
 - Make weight optional.
