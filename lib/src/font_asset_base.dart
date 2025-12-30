@@ -42,3 +42,38 @@ class FontAsset {
 extension FontAssetExt on EncodedAsset {
   bool get isFontAsset => type == fontAssetType;
 }
+
+extension FontAssetAdder on BuildOutputAssetsBuilder {
+  BuildOutputDataAssetsBuilder get fonts => BuildOutputDataAssetsBuilder._(this);
+}
+
+/// Extension on [BuildOutputBuilder] to add [FontAsset]s.
+final class BuildOutputDataAssetsBuilder {
+  final BuildOutputAssetsBuilder _output;
+
+  BuildOutputDataAssetsBuilder._(this._output);
+
+  /// Adds the given [asset] to the hook output with [routing].
+  ///
+  /// The [FontAsset.file] must be an absolute path. Prefer constructing the
+  /// path via [HookInput.outputDirectoryShared] or [HookInput.outputDirectory]
+  /// for files emitted during a hook, and via [HookInput.packageRoot] for files
+  /// which are part of the package.
+  void add(FontAsset asset, {AssetRouting routing = const ToAppBundle()}) =>
+      _output.addEncodedAsset(asset.encode(), routing: routing);
+
+  /// Adds the given [assets] to the hook output with [routing].
+  ///
+  /// The [FontAsset.file]s must be absolute paths. Prefer constructing the
+  /// path via [HookInput.outputDirectoryShared] or [HookInput.outputDirectory]
+  /// for files emitted during a hook, and via [HookInput.packageRoot] for files
+  /// which are part of the package.
+  void addAll(
+    Iterable<FontAsset> assets, {
+    AssetRouting routing = const ToAppBundle(),
+  }) {
+    for (final asset in assets) {
+      add(asset, routing: routing);
+    }
+  }
+}
