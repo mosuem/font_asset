@@ -37,6 +37,14 @@ class FontAsset {
       if (weight != null) _weightKey: weight,
     });
   }
+
+  @override
+  String toString() {
+    return 'FontAsset(file: $file, '
+        'fontFamily: $fontFamily, '
+        'package: $package, '
+        'weight: $weight)';
+  }
 }
 
 extension FontAssetExt on EncodedAsset {
@@ -44,7 +52,12 @@ extension FontAssetExt on EncodedAsset {
 }
 
 extension FontAssetAdder on BuildOutputAssetsBuilder {
-  BuildOutputDataAssetsBuilder get fonts => BuildOutputDataAssetsBuilder._(this);
+  BuildOutputDataAssetsBuilder get fonts =>
+      BuildOutputDataAssetsBuilder._(this);
+}
+
+extension LinkFontAssetAdder on LinkOutputAssetsBuilder {
+  LinkOutputFontAssetsBuilder get fonts => LinkOutputFontAssetsBuilder._(this);
 }
 
 /// Extension on [BuildOutputBuilder] to add [FontAsset]s.
@@ -76,4 +89,40 @@ final class BuildOutputDataAssetsBuilder {
       add(asset, routing: routing);
     }
   }
+}
+
+/// Extension on [BuildOutputBuilder] to add [FontAsset]s.
+final class LinkOutputFontAssetsBuilder {
+  final LinkOutputAssetsBuilder _output;
+
+  LinkOutputFontAssetsBuilder._(this._output);
+
+  /// Adds the given [asset] to the hook output with [routing].
+  ///
+  /// The [FontAsset.file] must be an absolute path. Prefer constructing the
+  /// path via [HookInput.outputDirectoryShared] or [HookInput.outputDirectory]
+  /// for files emitted during a hook, and via [HookInput.packageRoot] for files
+  /// which are part of the package.
+  void add(FontAsset asset, {LinkAssetRouting routing = const ToAppBundle()}) =>
+      _output.addEncodedAsset(asset.encode(), routing: routing);
+
+  /// Adds the given [assets] to the hook output with [routing].
+  ///
+  /// The [FontAsset.file]s must be absolute paths. Prefer constructing the
+  /// path via [HookInput.outputDirectoryShared] or [HookInput.outputDirectory]
+  /// for files emitted during a hook, and via [HookInput.packageRoot] for files
+  /// which are part of the package.
+  void addAll(
+    Iterable<FontAsset> assets, {
+    LinkAssetRouting routing = const ToAppBundle(),
+  }) {
+    for (final asset in assets) {
+      add(asset, routing: routing);
+    }
+  }
+}
+
+extension FontInputAssetsExt on LinkInputAssets {
+  Iterable<FontAsset> get fonts =>
+      encodedAssets.where((e) => e.isFontAsset).map(FontAsset.fromEncoded);
 }

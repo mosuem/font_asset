@@ -8,6 +8,8 @@ environment:
 
 dependencies:
   hooks: ^1.0.0
+  mime: ^2.0.0
+  path: ^1.9.1
 
 dev_dependencies:
   dart_flutter_team_lints: ^3.5.2
