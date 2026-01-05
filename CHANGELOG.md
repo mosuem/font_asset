@@ -1,3 +1,7 @@
+## 0.0.5
+
+- Add icon treeshaker from Flutter.
+
 ## 0.0.4
 
 - Add extension for build hook.
