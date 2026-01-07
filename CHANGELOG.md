@@ -1,3 +1,7 @@
+## 0.0.7
+
+- Remove appdill mention
+
 ## 0.0.6
 
 - Add icon treeshaker from Flutter.
