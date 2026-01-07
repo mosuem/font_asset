@@ -1,3 +1,7 @@
+## 0.0.6
+
+- Add icon treeshaker from Flutter.
+
 ## 0.0.5
 
 - Add icon treeshaker from Flutter.
