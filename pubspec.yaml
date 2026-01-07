@@ -9,7 +9,7 @@ environment:
 dependencies:
   code_assets: ^1.0.0
   data_assets: ^0.19.6
-  flutter_hook_config: ^0.0.2
+  flutter_hook_config: ^0.0.3
   hooks: ^1.0.0
   mime: ^2.0.0
   native_toolchain_c: ^0.17.4

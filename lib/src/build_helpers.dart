@@ -1,3 +1,4 @@
+import 'package:flutter_hook_config/flutter_hook_config.dart';
 import 'package:hooks/hooks.dart';
 import 'package:path/path.dart' as path;
 
@@ -18,14 +19,13 @@ void addFontAsset(
       ? const ToLinkHook('font_asset')
       : const ToAppBundle(),
 );
-final flutterRoot = '/home/mosum/projects/flutter/';
 
 void addMaterialFont(BuildInput input, BuildOutputBuilder output) =>
     output.assets.fonts.add(
       FontAsset(
         file: Uri.file(
           path.join(
-            flutterRoot,
+            input.config.flutter.flutterRoot,
             'bin',
             'cache',
             'artifacts',

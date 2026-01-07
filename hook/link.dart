@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:data_assets/data_assets.dart';
-import 'package:font_asset/build_helpers.dart' show flutterRoot;
 import 'package:font_asset/font_asset.dart';
 import 'package:font_asset/icon_treeshaker.dart';
 import 'package:hooks/hooks.dart';
@@ -14,43 +13,37 @@ Future<void> main(List<String> arguments) async {
     final treeshaker = Treeshaker(fonts, input.outputDirectory);
     for (final font in fonts) {
       print('Shaking $font');
-      final shookFont = await treeshaker.shake(
-        font,
-        input.config.flutter(
-          input.assets.data.firstWhere((file) => file.name == 'font-subset'),
-          input.assets.data.firstWhere((file) => file.name == 'const_finder'),
-          input.assets.data.firstWhere((file) => file.name == 'appDill'),
-        ),
-      );
+      final shookFont = await treeshaker.shake(font, input.fontConfig());
       output.assets.fonts.add(shookFont);
     }
   });
 }
 
-extension on LinkConfig {
-  FlutterConfig flutter(
-    DataAsset fontSubset,
-    DataAsset constFinder,
-    DataAsset appDill,
-  ) {
-    return FlutterConfig(
-      appDill: File.fromUri(appDill.file),
-      dart: File('${flutterRoot}bin/cache/dart-sdk/bin/dart'),
-      constFinder: File.fromUri(constFinder.file),
-      fontSubset: File.fromUri(fontSubset.file),
+extension on LinkInput {
+  FlutterFontConfig fontConfig() {
+    return FlutterFontConfig(
+      appDill: fileFromAsset('appDill'),
+      fontSubset: fileFromAsset('font-subset'),
+      constFinder: fileFromAsset('const_finder'),
+      dart: File(
+        '${fileFromAsset('flutterRoot').readAsStringSync()}/bin/cache/dart-sdk/bin/dart',
+      ),
       isWeb: false,
     );
   }
+
+  File fileFromAsset(String name) =>
+      File.fromUri(assets.data.firstWhere((file) => file.name == name).file);
 }
 
-class FlutterConfig {
+class FlutterFontConfig {
   final File appDill;
   final File dart;
   final File constFinder;
   final File fontSubset;
   final bool isWeb;
 
-  FlutterConfig({
+  FlutterFontConfig({
     required this.appDill,
     required this.dart,
     required this.constFinder,
@@ -66,7 +59,7 @@ class Treeshaker {
 
   Treeshaker(this.fonts, this.outputDirectory);
 
-  Future<FontAsset> shake(FontAsset font, FlutterConfig flutter) async {
+  Future<FontAsset> shake(FontAsset font, FlutterFontConfig flutter) async {
     final subsetFont =
         await IconTreeShaker(
           appDill: flutter.appDill,
