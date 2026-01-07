@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:data_assets/data_assets.dart';
 import 'package:font_asset/build_helpers.dart' show flutterRoot;
 import 'package:font_asset/font_asset.dart';
 import 'package:font_asset/icon_treeshaker.dart';
@@ -13,29 +14,30 @@ Future<void> main(List<String> arguments) async {
     final treeshaker = Treeshaker(fonts, input.outputDirectory);
     for (final font in fonts) {
       print('Shaking $font');
-      final shookFont = await treeshaker.shake(font, input.config.flutter);
+      final shookFont = await treeshaker.shake(
+        font,
+        input.config.flutter(
+          input.assets.data.firstWhere((file) => file.name == 'font-subset'),
+          input.assets.data.firstWhere((file) => file.name == 'const_finder'),
+          input.assets.data.firstWhere((file) => file.name == 'appDill'),
+        ),
+      );
       output.assets.fonts.add(shookFont);
     }
   });
 }
 
 extension on LinkConfig {
-  FlutterConfig get flutter {
+  FlutterConfig flutter(
+    DataAsset fontSubset,
+    DataAsset constFinder,
+    DataAsset appDill,
+  ) {
     return FlutterConfig(
-      appDill:
-          Directory(
-                '/home/mosum/projects/font_asset_test/.dart_tool/flutter_build/',
-              )
-              .listSync(recursive: true)
-              .whereType<File>()
-              .firstWhere((file) => file.path.endsWith('app.dill')),
+      appDill: File.fromUri(appDill.file),
       dart: File('${flutterRoot}bin/cache/dart-sdk/bin/dart'),
-      constFinder: File(
-        '${flutterRoot}bin/cache/artifacts/engine/linux-x64/const_finder.dart.snapshot',
-      ),
-      fontSubset: File(
-        '${flutterRoot}bin/cache/artifacts/engine/linux-x64/font-subset',
-      ),
+      constFinder: File.fromUri(constFinder.file),
+      fontSubset: File.fromUri(fontSubset.file),
       isWeb: false,
     );
   }
