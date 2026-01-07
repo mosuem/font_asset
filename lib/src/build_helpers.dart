@@ -4,8 +4,8 @@ import 'package:path/path.dart' as path;
 import '../font_asset.dart';
 
 void addFontAsset(
-  BuildOutputBuilder output,
-  BuildInput input, {
+  BuildInput input,
+  BuildOutputBuilder output, {
   required String filePath,
   required String fontFamily,
 }) => output.assets.fonts.add(
@@ -20,7 +20,7 @@ void addFontAsset(
 );
 final flutterRoot = '/home/mosum/projects/flutter/';
 
-void addMaterialFont(BuildOutputBuilder output, BuildInput input) =>
+void addMaterialFont(BuildInput input, BuildOutputBuilder output) =>
     output.assets.fonts.add(
       FontAsset(
         file: Uri.file(
