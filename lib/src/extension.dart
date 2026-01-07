@@ -1,4 +1,3 @@
-import 'package:flutter_hook_config/flutter_hook_config.dart';
 import 'package:hooks/hooks.dart';
 
 import 'font_asset_base.dart';
@@ -6,9 +5,7 @@ import 'font_asset_base.dart';
 /// The protocol extension for the `hook/build.dart` and `hook/link.dart`
 /// with [FontAsset]s.
 final class FontAssetsExtension implements ProtocolExtension {
-  final Uri appDill;
-
-  FontAssetsExtension({required this.appDill});
+  FontAssetsExtension();
 
   @override
   void setupBuildInput(BuildInputBuilder input) {
@@ -22,7 +19,6 @@ final class FontAssetsExtension implements ProtocolExtension {
 
   void _setupConfig(HookInputBuilder input) {
     input.config.addBuildAssetTypes([fontAssetType]);
-    input.config.setupFlutter(appDill: appDill);
   }
 
   @override
