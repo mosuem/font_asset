@@ -1,3 +1,7 @@
+## 0.0.8
+
+- Get flutterRoot from config
+
 ## 0.0.7
 
 - Remove appdill mention
