@@ -1,3 +1,7 @@
+## 0.0.9
+
+- Allow for font families
+
 ## 0.0.8
 
 - Get flutterRoot from config

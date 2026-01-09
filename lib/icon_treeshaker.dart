@@ -7,6 +7,7 @@ import 'package:mime/mime.dart' as mime;
 import 'package:path/path.dart' as path;
 
 import 'font_asset.dart';
+import 'src/font_asset_base.dart';
 
 /// A class that wraps the functionality of the const finder package and the
 /// font subset utility to tree shake unused icons from fonts.
@@ -54,12 +55,12 @@ class IconTreeShaker {
 
     final iconData = await _findConstants(dart, constFinder, appDill);
     final usedFonts = fonts
-        .where((element) => iconData.keys.contains(element.fontFamily))
+        .where((element) => iconData.keys.contains(element.family))
         .toList();
     if (usedFonts.length != iconData.length) {
       print(
         'Expected to find fonts for ${iconData.keys}, but found '
-        '${usedFonts.map((e) => e.fontFamily).toList()}. This usually means you are referring to '
+        '${usedFonts.map((e) => e.family).toList()}. This usually means you are referring to '
         'font families in an IconData class but not including them '
         'in the assets section of your pubspec.yaml, are missing '
         'the package that would include them, or are missing '
@@ -70,17 +71,17 @@ class IconTreeShaker {
     final result = <String, _IconTreeShakerData>{};
     const kSpacePoint = 32;
     for (final entry in usedFonts) {
-      final codePoints = iconData[entry.fontFamily];
+      final codePoints = iconData[entry.family];
       if (codePoints == null) {
         throw IconTreeShakerException._(
-          'Expected to find code points for ${entry.fontFamily}, but none were found in $iconData.',
+          'Expected to find code points for ${entry.family}, but none were found in $iconData.',
         );
       }
 
       // Add space as an optional code point, as web uses it to measure the font height.
       final optionalCodePoints = isWeb ? <int>[kSpacePoint] : <int>[];
       result[entry.file.path] = _IconTreeShakerData(
-        family: entry.fontFamily,
+        family: entry.family,
         relativePath: entry.file.path,
         codePoints: codePoints,
         optionalCodePoints: optionalCodePoints,
@@ -159,7 +160,8 @@ class IconTreeShaker {
     print(getSubsetSummaryMessage(input, File(outputPath)));
     return FontAsset(
       file: Uri.file(outputPath),
-      fontFamily: font.fontFamily,
+      weight: font.weight,
+      family: font.family,
       package: font.package,
     );
   }

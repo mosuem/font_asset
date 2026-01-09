@@ -2,37 +2,39 @@ import 'package:hooks/hooks.dart';
 
 const fontAssetType = 'font_asset';
 
+/// Represents a single font file.
 class FontAsset {
   FontAsset({
     required this.file,
-    required this.fontFamily,
+    required this.family,
     required this.package,
     this.weight,
   });
+
   factory FontAsset.fromEncoded(EncodedAsset encodedAsset) {
     final Map<String, Object?> encoding = encodedAsset.encoding;
     return FontAsset(
       file: Uri.parse(encoding[_fileKey]! as String),
-      fontFamily: encoding[_fontFamilyKey]! as String,
+      family: encoding[_familyKey]! as String,
       package: encoding[_packageKey]! as String,
       weight: encoding[_weightKey] as int?,
     );
   }
 
   final Uri file;
-  final String fontFamily;
+  final String family;
   final String package;
   final int? weight;
 
   static const _fileKey = 'file';
   static const _weightKey = 'weight';
-  static const _fontFamilyKey = 'name';
+  static const _familyKey = 'name';
   static const _packageKey = 'package';
 
   EncodedAsset encode() {
     return EncodedAsset(fontAssetType, {
       _fileKey: file.toFilePath(windows: false),
-      _fontFamilyKey: fontFamily,
+      _familyKey: family,
       _packageKey: package,
       if (weight != null) _weightKey: weight,
     });
@@ -41,7 +43,7 @@ class FontAsset {
   @override
   String toString() {
     return 'FontAsset(file: $file, '
-        'fontFamily: $fontFamily, '
+        'family: $family, '
         'package: $package, '
         'weight: $weight)';
   }
@@ -67,20 +69,10 @@ final class BuildOutputDataAssetsBuilder {
   BuildOutputDataAssetsBuilder._(this._output);
 
   /// Adds the given [asset] to the hook output with [routing].
-  ///
-  /// The [FontAsset.file] must be an absolute path. Prefer constructing the
-  /// path via [HookInput.outputDirectoryShared] or [HookInput.outputDirectory]
-  /// for files emitted during a hook, and via [HookInput.packageRoot] for files
-  /// which are part of the package.
   void add(FontAsset asset, {AssetRouting routing = const ToAppBundle()}) =>
       _output.addEncodedAsset(asset.encode(), routing: routing);
 
   /// Adds the given [assets] to the hook output with [routing].
-  ///
-  /// The [FontAsset.file]s must be absolute paths. Prefer constructing the
-  /// path via [HookInput.outputDirectoryShared] or [HookInput.outputDirectory]
-  /// for files emitted during a hook, and via [HookInput.packageRoot] for files
-  /// which are part of the package.
   void addAll(
     Iterable<FontAsset> assets, {
     AssetRouting routing = const ToAppBundle(),
@@ -98,20 +90,10 @@ final class LinkOutputFontAssetsBuilder {
   LinkOutputFontAssetsBuilder._(this._output);
 
   /// Adds the given [asset] to the hook output with [routing].
-  ///
-  /// The [FontAsset.file] must be an absolute path. Prefer constructing the
-  /// path via [HookInput.outputDirectoryShared] or [HookInput.outputDirectory]
-  /// for files emitted during a hook, and via [HookInput.packageRoot] for files
-  /// which are part of the package.
   void add(FontAsset asset, {LinkAssetRouting routing = const ToAppBundle()}) =>
       _output.addEncodedAsset(asset.encode(), routing: routing);
 
   /// Adds the given [assets] to the hook output with [routing].
-  ///
-  /// The [FontAsset.file]s must be absolute paths. Prefer constructing the
-  /// path via [HookInput.outputDirectoryShared] or [HookInput.outputDirectory]
-  /// for files emitted during a hook, and via [HookInput.packageRoot] for files
-  /// which are part of the package.
   void addAll(
     Iterable<FontAsset> assets, {
     LinkAssetRouting routing = const ToAppBundle(),

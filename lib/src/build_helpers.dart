@@ -4,16 +4,37 @@ import 'package:path/path.dart' as path;
 
 import '../font_asset.dart';
 
-void addFontAsset(
+void addFont(
   BuildInput input,
   BuildOutputBuilder output, {
+  required String family,
   required String filePath,
-  required String fontFamily,
+  int? weight,
 }) => output.assets.fonts.add(
   FontAsset(
+    family: family,
     file: input.packageRoot.resolve(filePath),
-    fontFamily: fontFamily,
+    weight: weight,
     package: input.packageName,
+  ),
+  routing: input.config.linkingEnabled
+      ? const ToLinkHook('font_asset')
+      : const ToAppBundle(),
+);
+
+void addFontFamily(
+  BuildInput input,
+  BuildOutputBuilder output, {
+  required String family,
+  required List<({Uri filePath, int? weight})> fonts,
+}) => output.assets.fonts.addAll(
+  fonts.map(
+    (e) => FontAsset(
+      file: e.filePath,
+      family: family,
+      package: input.packageName,
+      weight: e.weight,
+    ),
   ),
   routing: input.config.linkingEnabled
       ? const ToLinkHook('font_asset')
@@ -23,6 +44,7 @@ void addFontAsset(
 void addMaterialFont(BuildInput input, BuildOutputBuilder output) =>
     output.assets.fonts.add(
       FontAsset(
+        family: 'MaterialIcons',
         file: Uri.file(
           path.join(
             input.config.flutter.flutterRoot,
@@ -33,7 +55,6 @@ void addMaterialFont(BuildInput input, BuildOutputBuilder output) =>
             'MaterialIcons-Regular.otf',
           ),
         ),
-        fontFamily: 'MaterialIcons',
         package: input.packageName,
       ),
       routing: input.config.linkingEnabled

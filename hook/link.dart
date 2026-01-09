@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:data_assets/data_assets.dart';
 import 'package:font_asset/font_asset.dart';
-import 'package:font_asset/icon_treeshaker.dart';
+import 'package:font_asset/icon_treeshaker.dart' show IconTreeShaker;
 import 'package:hooks/hooks.dart';
 import 'package:path/path.dart' as path;
 
