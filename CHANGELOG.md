@@ -1,3 +1,10 @@
+## 0.1.0
+
+- Upgrade to `hooks: ^2.0.0`, `data_assets: ^0.20.0`, and `record_use: ^1.0.0`.
+- Add `name`, `style`, and `id` to `FontAsset`.
+- Add input/output validation and `outputFiles` to `FontAssetsExtension`.
+- Migrate `IconTreeShaker` and `hook/link.dart` from `const_finder` to `package:record_use`.
+
 ## 0.0.9
 
 - Allow for font families
