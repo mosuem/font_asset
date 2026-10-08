@@ -1,8 +1,7 @@
 import 'dart:io';
 
 import 'package:font_asset/font_asset.dart';
-import 'package:font_asset/icon_treeshaker.dart';
-import 'package:record_use/record_use.dart';
+import 'package:hooks/hooks.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -18,9 +17,8 @@ void main() {
     }
   });
 
-  test(
-    'FontAsset encodes and decodes with all fields and preserves file URI',
-    () {
+  group('FontAsset', () {
+    test('encodes and decodes with all fields and preserves file URI', () {
       final fontFile = File('${tempDir.path}/Regular.ttf')
         ..writeAsStringSync('ttf');
       final asset = FontAsset(
@@ -35,6 +33,7 @@ void main() {
       expect(asset.id, 'package:my_pkg/fonts/Regular.ttf');
 
       final encoded = asset.encode();
+      expect(encoded.type, fontAssetType);
       expect(encoded.isFontAsset, isTrue);
 
       final decoded = encoded.asFontAsset;
@@ -46,12 +45,37 @@ void main() {
       expect(decoded.package, 'my_pkg');
       expect(decoded.weight, 400);
       expect(decoded.style, 'italic');
-    },
-  );
+    });
 
-  test(
-    'FontAssetsExtension validates application assets and outputFiles',
-    () async {
+    test('name defaults to the file name', () {
+      final asset = FontAsset(
+        file: Uri.file('${tempDir.path}/fonts/Bold.ttf'),
+        family: 'MyFamily',
+        package: 'my_pkg',
+      );
+      expect(asset.name, 'Bold.ttf');
+      expect(asset.weight, isNull);
+      expect(asset.style, isNull);
+    });
+  });
+
+  group('FontAssetsExtension', () {
+    test('registers the font asset type on the build input', () {
+      expect(
+        _buildInput(tempDir, packageName: 'my_pkg').config.buildAssetTypes,
+        contains(fontAssetType),
+      );
+      expect(
+        _buildInput(
+          tempDir,
+          packageName: 'my_pkg',
+          supportsFontAssets: false,
+        ).config.buildAssetTypes,
+        isNot(contains(fontAssetType)),
+      );
+    });
+
+    test('validates application assets and lists outputFiles', () async {
       final ext = FontAssetsExtension();
       final fontFile = File('${tempDir.path}/Regular.ttf')
         ..writeAsStringSync('ttf');
@@ -79,7 +103,9 @@ void main() {
       expect(
         duplicateErrors,
         contains(
-          contains('Duplicate font asset id: "package:my_pkg/fonts/Regular.ttf"'),
+          contains(
+            'Duplicate font asset id: "package:my_pkg/fonts/Regular.ttf"',
+          ),
         ),
       );
 
@@ -101,71 +127,145 @@ void main() {
         contains(contains('must be a multiple of 100 between 100 and 900')),
       );
       expect(fieldErrors, contains(contains('must be "normal" or "italic"')));
-    },
-  );
+    });
 
-  test(
-    'IconTreeShaker throws IconTreeShakerException on non-constant IconData',
-    () async {
-      final fontFile = File('${tempDir.path}/MaterialIcons-Regular.otf')
-        ..writeAsBytesSync(const <int>[
-          0,
-          1,
-          0,
-          0,
-          0,
-          15,
-          0,
-          128,
-          0,
-          3,
-          0,
-          112,
-        ]);
-      final fontSubset = File('${tempDir.path}/font-subset')
-        ..writeAsStringSync('');
-
-      const iconDataClass = Class(
-        'IconData',
-        Library('package:flutter/src/widgets/icon_data.dart'),
+    test('rejects build output fonts owned by another package', () async {
+      final fontFile = File('${tempDir.path}/Regular.ttf')
+        ..writeAsStringSync('ttf');
+      final input = _buildInput(tempDir, packageName: 'my_pkg');
+      final output = BuildOutputBuilder();
+      output.assets.fonts.add(
+        FontAsset(file: fontFile.uri, family: 'F', package: 'other_pkg'),
       );
-      const rootLoadingUnit = LoadingUnit('1');
+      final errors = await FontAssetsExtension().validateBuildOutput(
+        input,
+        output.build(),
+      );
+      expect(errors, contains(contains('must have package name my_pkg')));
+    });
+  });
 
-      final recordings = Recordings(
-        calls: const {},
-        instances: {
-          iconDataClass: const [
-            InstanceCreationReference(
-              definition: iconDataClass,
-              loadingUnit: rootLoadingUnit,
-              positionalArguments: [NonConstant()],
-              namedArguments: {'fontFamily': StringConstant('MaterialIcons')},
-            ),
-          ],
-        },
+  group('build helpers', () {
+    test('addFont registers the file as asset and dependency', () {
+      File('${tempDir.path}/fonts/Regular.ttf')
+        ..createSync(recursive: true)
+        ..writeAsStringSync('ttf');
+      final input = _buildInput(tempDir, packageName: 'my_pkg');
+      final outputBuilder = BuildOutputBuilder();
+
+      addFont(
+        input,
+        outputBuilder,
+        family: 'MyFamily',
+        filePath: 'fonts/Regular.ttf',
+        weight: 400,
+        style: 'normal',
       );
 
-      final fontAsset = FontAsset(
-        file: fontFile.uri,
-        family: 'MaterialIcons',
-        name: 'fonts/MaterialIcons-Regular.otf',
-        package: 'font_asset',
+      final output = outputBuilder.build();
+      final fonts = output.assets.encodedAssets.map((e) => e.asFontAsset);
+      expect(fonts, hasLength(1));
+      final font = fonts.single;
+      expect(font.package, 'my_pkg');
+      expect(font.family, 'MyFamily');
+      expect(font.name, 'fonts/Regular.ttf');
+      expect(font.weight, 400);
+      expect(font.style, 'normal');
+      expect(
+        font.file.toFilePath(),
+        File('${tempDir.path}/fonts/Regular.ttf').path,
+      );
+      expect(output.dependencies, contains(font.file));
+      expect(output.assets.encodedAssetsForLinking, isEmpty);
+    });
+
+    test('addFontFamily keeps relative paths as names', () {
+      final input = _buildInput(tempDir, packageName: 'my_pkg');
+      final outputBuilder = BuildOutputBuilder();
+
+      addFontFamily(
+        input,
+        outputBuilder,
+        family: 'Roboto',
+        fonts: const [
+          FontFile('fonts/Roboto-Regular.ttf'),
+          FontFile('fonts/Roboto-Bold.ttf', weight: 700),
+          FontFile('fonts/italic/Roboto-Italic.ttf', style: 'italic'),
+        ],
       );
 
-      final shaker = IconTreeShaker(
-        recordings: recordings,
-        fontSubset: fontSubset,
-        fonts: [fontAsset],
-        isWeb: false,
-      );
+      final fonts = outputBuilder
+          .build()
+          .assets
+          .encodedAssets
+          .map((e) => e.asFontAsset)
+          .toList();
+      expect(fonts.map((f) => f.name), [
+        'fonts/Roboto-Regular.ttf',
+        'fonts/Roboto-Bold.ttf',
+        'fonts/italic/Roboto-Italic.ttf',
+      ]);
+      expect(fonts.map((f) => f.family).toSet(), {'Roboto'});
+      expect(fonts.map((f) => f.weight), [null, 700, null]);
+      expect(fonts.map((f) => f.style), [null, null, 'italic']);
+    });
 
-      await expectLater(
-        shaker.subsetFont(
-          font: fontAsset,
-          outputPath: '${tempDir.path}/out.otf',
-        ),
-        throwsA(isA<IconTreeShakerException>()),
+    test('helpers are no-ops when the SDK does not support font assets', () {
+      final input = _buildInput(
+        tempDir,
+        packageName: 'my_pkg',
+        supportsFontAssets: false,
       );
-    },
-  );
+      final outputBuilder = BuildOutputBuilder();
+      addFont(input, outputBuilder, family: 'F', filePath: 'fonts/a.ttf');
+      addFontFamily(
+        input,
+        outputBuilder,
+        family: 'F',
+        fonts: const [FontFile('fonts/b.ttf')],
+      );
+      final output = outputBuilder.build();
+      expect(output.assets.encodedAssets, isEmpty);
+      expect(output.dependencies, isEmpty);
+    });
+
+    test('routing can send fonts to a link hook', () {
+      final input = _buildInput(
+        tempDir,
+        packageName: 'my_pkg',
+        linkingEnabled: true,
+      );
+      final outputBuilder = BuildOutputBuilder();
+      addFont(
+        input,
+        outputBuilder,
+        family: 'F',
+        filePath: 'fonts/a.ttf',
+        routing: const ToLinkHook('my_pkg'),
+      );
+      final output = outputBuilder.build();
+      expect(output.assets.encodedAssets, isEmpty);
+      expect(output.assets.encodedAssetsForLinking['my_pkg'], hasLength(1));
+    });
+  });
+}
+
+BuildInput _buildInput(
+  Directory packageRoot, {
+  required String packageName,
+  bool linkingEnabled = false,
+  bool supportsFontAssets = true,
+}) {
+  final builder = BuildInputBuilder()
+    ..setupShared(
+      packageName: packageName,
+      packageRoot: packageRoot.uri,
+      outputFile: packageRoot.uri.resolve('out/output.json'),
+      outputDirectoryShared: packageRoot.uri.resolve('out/shared/'),
+    )
+    ..config.setupBuild(linkingEnabled: linkingEnabled);
+  if (supportsFontAssets) {
+    FontAssetsExtension().setupBuildInput(builder);
+  }
+  return builder.build();
 }

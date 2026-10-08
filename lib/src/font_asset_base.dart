@@ -104,8 +104,6 @@ extension LinkFontAssetAdder on LinkOutputAssetsBuilder {
   LinkOutputFontAssetsBuilder get fonts => LinkOutputFontAssetsBuilder._(this);
 }
 
-typedef BuildOutputDataAssetsBuilder = BuildOutputFontAssetsBuilder;
-
 /// Extension on [BuildOutputBuilder] to add [FontAsset]s.
 final class BuildOutputFontAssetsBuilder {
   final BuildOutputAssetsBuilder _output;

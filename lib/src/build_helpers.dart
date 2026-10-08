@@ -1,10 +1,31 @@
-import 'dart:io' show File, Platform;
-
 import 'package:hooks/hooks.dart';
-import 'package:path/path.dart' as path;
 
 import '../font_asset.dart';
 
+/// A single font file belonging to a font family, used by [addFontFamily].
+///
+/// [filePath] is relative to the package root.
+final class FontFile {
+  const FontFile(this.filePath, {this.weight, this.style});
+
+  /// Path of the font file, relative to the package root.
+  final String filePath;
+
+  /// The font weight (`100`..`900`), or `null` for the default weight.
+  final int? weight;
+
+  /// The font style (`'normal'` or `'italic'`), or `null` for the default
+  /// style.
+  final String? style;
+}
+
+/// Adds a single font file at [filePath] (relative to the package root) to the
+/// [output] as a [FontAsset] of the given [family].
+///
+/// The asset is registered under [name] (defaults to [filePath]) in the
+/// package namespace, i.e. it is bundled as `packages/<package>/<name>`.
+///
+/// Does nothing when the SDK invoking the hook does not support font assets.
 void addFont(
   BuildInput input,
   BuildOutputBuilder output, {
@@ -13,6 +34,7 @@ void addFont(
   String? name,
   int? weight,
   String? style,
+  AssetRouting routing = const ToAppBundle(),
 }) {
   if (!input.config.buildAssetTypes.contains(fontAssetType)) {
     return;
@@ -28,66 +50,29 @@ void addFont(
       style: style,
       package: input.packageName,
     ),
-    routing: input.config.linkingEnabled
-        ? const ToLinkHook('font_asset')
-        : const ToAppBundle(),
+    routing: routing,
   );
 }
 
+/// Adds all [fonts] of a [family] to the [output].
+///
+/// Equivalent to calling [addFont] once per [FontFile].
 void addFontFamily(
   BuildInput input,
   BuildOutputBuilder output, {
   required String family,
-  required List<({Uri filePath, int? weight})> fonts,
+  required List<FontFile> fonts,
+  AssetRouting routing = const ToAppBundle(),
 }) {
-  if (!input.config.buildAssetTypes.contains(fontAssetType)) {
-    return;
+  for (final font in fonts) {
+    addFont(
+      input,
+      output,
+      family: family,
+      filePath: font.filePath,
+      weight: font.weight,
+      style: font.style,
+      routing: routing,
+    );
   }
-  for (final e in fonts) {
-    output.dependencies.add(e.filePath);
-  }
-  output.assets.fonts.addAll(
-    fonts.map(
-      (e) => FontAsset(
-        file: e.filePath,
-        family: family,
-        package: input.packageName,
-        weight: e.weight,
-      ),
-    ),
-    routing: input.config.linkingEnabled
-        ? const ToLinkHook('font_asset')
-        : const ToAppBundle(),
-  );
-}
-
-void addMaterialFont(BuildInput input, BuildOutputBuilder output) {
-  if (!input.config.buildAssetTypes.contains(fontAssetType)) {
-    return;
-  }
-  final flutterRoot =
-      Platform.environment['FLUTTER_ROOT'] ??
-      File(Platform.resolvedExecutable).parent.parent.parent.parent.parent.path;
-  final file = Uri.file(
-    path.join(
-      flutterRoot,
-      'bin',
-      'cache',
-      'artifacts',
-      'material_fonts',
-      'MaterialIcons-Regular.otf',
-    ),
-  );
-  output.dependencies.add(file);
-  output.assets.fonts.add(
-    FontAsset(
-      family: 'MaterialIcons',
-      name: 'fonts/MaterialIcons-Regular.otf',
-      file: file,
-      package: input.packageName,
-    ),
-    routing: input.config.linkingEnabled
-        ? const ToLinkHook('font_asset')
-        : const ToAppBundle(),
-  );
 }

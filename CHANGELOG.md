@@ -1,9 +1,17 @@
 ## 0.1.0
 
-- Upgrade to `hooks: ^2.0.0`, `data_assets: ^0.20.0`, and `record_use: ^1.0.0`.
-- Add `name`, `style`, and `id` to `FontAsset`.
+- **Breaking:** Upgrade to `hooks: ^2.0.0`.
+- **Breaking:** Remove `hook/build.dart`, `hook/link.dart`, the bundled
+  `font-subset` binary and `IconTreeShaker`. Fonts declared through this
+  package are bundled by Flutter like fonts declared in `pubspec.yaml`, so
+  Flutter's own icon tree shaker (`--tree-shake-icons`) applies to them.
+- **Breaking:** Remove `addMaterialFont`; use `uses-material-design: true`.
+- **Breaking:** `addFontFamily` now takes `List<FontFile>` with paths relative
+  to the package root (like `addFont`) and supports `style`.
+- Add `name`, `style`, `id`, `==`/`hashCode` to `FontAsset` and fix decoding of
+  Windows file paths.
 - Add input/output validation and `outputFiles` to `FontAssetsExtension`.
-- Migrate `IconTreeShaker` and `hook/link.dart` from `const_finder` to `package:record_use`.
+- Register font files as hook `dependencies` so builds rerun when they change.
 
 ## 0.0.9
 

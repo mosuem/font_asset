@@ -1,5 +1,5 @@
 name: font_asset
-description: A class for font assets to be used in Flutter for the hook system.
+description: A hooks protocol extension for declaring font assets from build hooks in Flutter.
 version: 0.1.0
 repository: https://github.com/mosuem/font_asset
 
@@ -7,11 +7,7 @@ environment:
   sdk: ^3.10.0
 
 dependencies:
-  data_assets: ^0.20.0
   hooks: ^2.0.0
-  mime: ^2.0.0
-  path: ^1.9.1
-  record_use: ^1.0.0
 
 dev_dependencies:
   dart_flutter_team_lints: ^3.5.2
