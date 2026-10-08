@@ -179,7 +179,7 @@ void main() {
       expect(output.assets.encodedAssetsForLinking, isEmpty);
     });
 
-    test('addFontFamily keeps relative paths as names', () {
+    test('addFontFamily uses the relative path as name unless given', () {
       final input = _buildInput(tempDir, packageName: 'my_pkg');
       final outputBuilder = BuildOutputBuilder();
 
@@ -190,7 +190,11 @@ void main() {
         fonts: const [
           FontFile('fonts/Roboto-Regular.ttf'),
           FontFile('fonts/Roboto-Bold.ttf', weight: 700),
-          FontFile('fonts/italic/Roboto-Italic.ttf', style: 'italic'),
+          FontFile(
+            '../shared/Roboto-Italic.ttf',
+            name: 'fonts/Roboto-Italic.ttf',
+            style: 'italic',
+          ),
         ],
       );
 
@@ -203,7 +207,12 @@ void main() {
       expect(fonts.map((f) => f.name), [
         'fonts/Roboto-Regular.ttf',
         'fonts/Roboto-Bold.ttf',
-        'fonts/italic/Roboto-Italic.ttf',
+        'fonts/Roboto-Italic.ttf',
+      ]);
+      expect(fonts.map((f) => f.file), [
+        input.packageRoot.resolve('fonts/Roboto-Regular.ttf'),
+        input.packageRoot.resolve('fonts/Roboto-Bold.ttf'),
+        input.packageRoot.resolve('../shared/Roboto-Italic.ttf'),
       ]);
       expect(fonts.map((f) => f.family).toSet(), {'Roboto'});
       expect(fonts.map((f) => f.weight), [null, 700, null]);

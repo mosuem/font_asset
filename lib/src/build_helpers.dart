@@ -6,10 +6,14 @@ import '../font_asset.dart';
 ///
 /// [filePath] is relative to the package root.
 final class FontFile {
-  const FontFile(this.filePath, {this.weight, this.style});
+  const FontFile(this.filePath, {this.name, this.weight, this.style});
 
   /// Path of the font file, relative to the package root.
   final String filePath;
+
+  /// The name under which the font is bundled, see [addFont]. Defaults to
+  /// [filePath].
+  final String? name;
 
   /// The font weight (`100`..`900`), or `null` for the default weight.
   final int? weight;
@@ -70,6 +74,7 @@ void addFontFamily(
       output,
       family: family,
       filePath: font.filePath,
+      name: font.name,
       weight: font.weight,
       style: font.style,
       routing: routing,
