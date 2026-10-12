@@ -1,8 +1,64 @@
+import 'dart:convert' show base64Decode, json;
 import 'dart:io';
 
 import 'package:font_asset/font_asset.dart';
 import 'package:hooks/hooks.dart';
+import 'package:record_use/record_use.dart';
 import 'package:test/test.dart';
+
+/// Roboto Regular subset containing the three glyphs `h` (104), `k` (107),
+/// and `o` (111).
+const String _kRobotoThreeGlyphFontBase64 =
+    'AAEAAAAPAIAAAwBwT1MvMnRvghoAAAJoAAAAYGNtYXAAfwFBAAAB0AAAAERj'
+    'dnQgK6gHnQAAAhQAAABUZnBnbXf4YKsAAAUoAAABvGdhc3AACAATAAABCAAA'
+    'AAxnbHlmm9QWxQAABuQAAAHYaGRteA4KBA4AAAEUAAAAEGhlYWT8atJ6AAAB'
+    'mAAAADZoaGVhCroFpAAAAXQAAAAkaG10eBCSAdgAAAEkAAAAEGxvY2EBMgCd'
+    'AAAA/AAAAAptYXhwAjQDCQAAATQAAAAgbmFtZRIELQQAAALIAAABFHBvc3T/'
+    'bQBkAAABVAAAACBwcmVwomb6yQAAA9wAAAFJAAAAAABGAJ0A7AAAAAEAAgAI'
+    'AAL//wAPAAAAAQAAAAgJBQQFBQUAAAOMAGQEaACMBA4AjQSQAFsAAQAAAAQA'
+    'jwAWAFQABQABAAAAAAAOAAACAAIkAAYAAQADAAAAAAAA/2oAZAAAAAAAAAAA'
+    'AAAAAAAAAAAAAAAAAAEAAAds/gwAAAlJ+hv+SgkwAAEAAAAAAAAAAAAAAAAA'
+    'AAAEAAEAAAACIxJ4oEfFXw889QAZCAAAAAAAxPARLgAAAADVAVL0+hv91Qkw'
+    'CHMAAAAJAAIAAAAAAAAAAAACAAAAAwAAABQAAwABAAAAFAAEADAAAAAIAAgA'
+    'AgAAAGgAawBv//8AAABoAGsAb////5n/l/+UAAEAAAAAAAAAAAAqAJ0AgACK'
+    'AHgA1ABkAE4AWgCHAGAAVgA0AjwAvACyAI4AxAAAABT+YAAUApsAIAMhAAsE'
+    'OgAUBI0AEAWwABQGGAAVAaYAEQbAAA4G2QAGAAAAAAADBIYBkAAFAAAFmgUz'
+    'AAABHwWaBTMAAAPRAGYCAAAAAgAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAABH'
+    'T09HAEAAaABvBgD+AABmB5oCACAAAZ8AAAAABDoFsAAgACAAAwAAAAcAWgAD'
+    'AAEECQAAAF4AXAADAAEECQABAAwAUAADAAEECQACAA4AQgADAAEECQADAAwA'
+    'UAADAAEECQAEAAwAUAADAAEECQAFACYAHAADAAEECQAGABwAAABSAG8AYgBv'
+    'AHQAbwAtAFIAZQBnAHUAbABhAHIAVgBlAHIAcwBpAG8AbgAgADIALgAxADMA'
+    'NwA7ACAAMgAwADEANwBSAGUAZwB1AGwAYQByAFIAbwBiAG8AdABvAEMAbwBw'
+    'AHkAcgBpAGcAaAB0ACAAMgAwADEAMQAgAEcAbwBvAGcAbABlACAASQBuAGMA'
+    'LgAgAEEAbABsACAAUgBpAGcAaAB0AHMAIABSAGUAcwBlAHIAdgBlAGQALrAM'
+    'K7AAKwCyARACKwGyEQECKwG3ETowJRsQAAgrALcBSDsuIRQACCu3AlhIOCgU'
+    'AAgrtwNSQzQlFgAIK7cEXk08KxkACCu3BTYsIhkPAAgrtwZxXUYyGwAIK7cH'
+    'kXdcOiMACCu3CH5nUDkaAAgrtwlURTYmFAAIK7cKdmBLNh0ACCu3C4NkTjoj'
+    'AAgrtwzZsopjPAAIK7cNFBAMCQYACCu3DjwyJxwRAAgrtw9ANCkdFAAIK7cQ'
+    'UEEuIRQACCsAshILByuwACBFfWkYRLI/GgFzsl8aAXOyfxoBc7IvGgF0sk8a'
+    'AXSybxoBdLKPGgF0sq8aAXSy/xoBdLIfGgF1sj8aAXWyXxoBdbJ/GgF1sg8e'
+    'AXOyfx4Bc7LvHgFzsh8eAXSyXx4BdLKPHgF0ss8eAXSy/x4BdLI/HgF1sm8e'
+    'AXWyLyABc7JvIAFzAAAAsAAsS7AJUFixAQGOWbgB/4WwhB2xCQNfXi2wASwg'
+    'IEVpRLABYC2wAiywASohLbADLCBGsAMlRlJYI1kgiiCKSWSKIEYgaGFksAQl'
+    'RiBoYWRSWCNlilkvILAAU1hpILAAVFghsEBZG2kgsABUWCGwQGVZWTotsAQs'
+    'IEawBCVGUlgjilkgRiBqYWSwBCVGIGphZFJYI4pZL/0tsAUsSyCwAyZQWFFY'
+    'sIBEG7BARFkbISEgRbDAUFiwwEQbIVlZLbAGLCAgRWlEsAFgICBFfWkYRLAB'
+    'YC2wByywBiotsAgsSyCwAyZTWLBAG7AAWYqKILADJlNYIyGwgIqKG4ojWSCw'
+    'AyZTWCMhsMCKihuKI1kgsAMmU1gjIbgBAIqKG4ojWSCwAyZTWCMhuAFAioob'
+    'iiNZILADJlNYsAMlRbgBgFBYIyG4AYAjIRuwAyVFIyEjIVkbIVlELbAJLEtT'
+    'WEVEGyEhWS2wCiywKEUtsAsssClFLbAMLLEnAYggilNYuUAABABjuAgAiFRY'
+    'uQAoA+hwWRuwI1NYsCCIuBAAVFi5ACgD6HBZWVktsA0ssECIuCAAWlixKQBE'
+    'G7kAKQPoRFktAAEAjAAAA98GAAARAEqyChITERI5ALAQL7AARViwAi8bsQIa'
+    'PlmwAEVYsAUvG7EFEj5ZsABFWLAOLxuxDhI+WbIAAgUREjmwAhCxCgGwCitY'
+    'Idgb9FkwMQE2MyATESMRJiYjIgYHESMRMwFFe8UBVwO5AWlvWogmubkDt5f+'
+    'ff01Asx1cGBO/P0GAAAAAQCNAAAEDAYAAAwAdQCwAEVYsAQvG7EEID5ZsABF'
+    'WLAILxuxCBo+WbAARViwAi8bsQISPlmwAEVYsAsvG7ELEj5ZsgAIAhESOUAV'
+    'OgBKAFoAagB6AIoAmgCqALoAygAKXbIGCAIREjlAFTYGRgZWBmYGdgaGBpYG'
+    'pga2BsYGCl0wMQEHESMRMxE3ATMBASMBunS5uWMBUeH+WwHW2QH1ef6EBgD8'
+    'X3cBZP48/YoAAgBb/+wENAROAA8AGwBFsgwcHRESObAMELAT0ACwAEVYsAQv'
+    'G7EEGj5ZsABFWLAMLxuxDBI+WbETAbAKK1gh2Bv0WbAEELEZAbAKK1gh2Bv0'
+    'WTAxEzQ2NjMyABUVFAYGIyIANRcUFjMyNjU0JiMiBlt934/dARF54ZLc/u+6'
+    'p4yNpqmMiagCJ5/+iv7O/g2e+4wBMvwJtNrdx7Ld2g==';
 
 void main() {
   late Directory tempDir;
@@ -255,6 +311,122 @@ void main() {
       final output = outputBuilder.build();
       expect(output.assets.encodedAssets, isEmpty);
       expect(output.assets.encodedAssetsForLinking['my_pkg'], hasLength(1));
+    });
+
+    test(
+      'treeShake routes fonts to font_asset link hook when linkingEnabled',
+      () {
+        final linkingInput = _buildInput(
+          tempDir,
+          packageName: 'my_pkg',
+          linkingEnabled: true,
+        );
+        final linkingOutput = BuildOutputBuilder();
+        addFont(
+          linkingInput,
+          linkingOutput,
+          family: 'MyIcons',
+          filePath: 'fonts/MyIcons.ttf',
+          treeShake: true,
+        );
+        final builtLinking = linkingOutput.build();
+        expect(builtLinking.assets.encodedAssets, isEmpty);
+        expect(
+          builtLinking.assets.encodedAssetsForLinking['font_asset'],
+          hasLength(1),
+        );
+
+        final debugInput = _buildInput(
+          tempDir,
+          packageName: 'my_pkg',
+          linkingEnabled: false,
+        );
+        final debugOutput = BuildOutputBuilder();
+        addFont(
+          debugInput,
+          debugOutput,
+          family: 'MyIcons',
+          filePath: 'fonts/MyIcons.ttf',
+          treeShake: true,
+        );
+        final builtDebug = debugOutput.build();
+        expect(builtDebug.assets.encodedAssets, hasLength(1));
+        expect(builtDebug.assets.encodedAssetsForLinking, isEmpty);
+      },
+    );
+  });
+
+  group('treeShakeFontAssets', () {
+    test('subsets icon font based on recorded IconData usages', () async {
+      final fontFile = File('${tempDir.path}/MyIcons.ttf')
+        ..writeAsBytesSync(base64Decode(_kRobotoThreeGlyphFontBase64));
+
+      const iconDataClass = Class(
+        'IconData',
+        Library('package:flutter/src/widgets/icon_data.dart'),
+      );
+      final recordedUsesFile = File('${tempDir.path}/recorded_uses.json')
+        ..writeAsStringSync(
+          json.encode(
+            Recordings(
+              calls: const <DefinitionWithStaticCalls, List<CallReference>>{},
+              instances: <DefinitionWithInstances, List<InstanceReference>>{
+                iconDataClass: const <InstanceReference>[
+                  InstanceConstantReference(
+                    instanceConstant: InstanceConstant(
+                      definition: iconDataClass,
+                      fields: <String, Constant>{
+                        'codePoint': IntConstant(104), // 'h'
+                        'fontFamily': StringConstant('MyIcons'),
+                        'fontPackage': StringConstant('my_pkg'),
+                      },
+                    ),
+                    loadingUnit: LoadingUnit('root'),
+                  ),
+                ],
+              },
+            ).toJson(),
+          ),
+        );
+
+      final linkInputBuilder = LinkInputBuilder()
+        ..setupShared(
+          packageName: 'font_asset',
+          packageRoot: tempDir.uri,
+          outputFile: tempDir.uri.resolve('out/link_output.json'),
+          outputDirectoryShared: tempDir.uri.resolve('out/shared/'),
+        )
+        ..setupLink(
+          assets: <EncodedAsset>[
+            FontAsset(
+              file: fontFile.uri,
+              family: 'MyIcons',
+              name: 'fonts/MyIcons.ttf',
+              package: 'my_pkg',
+            ).encode(),
+          ],
+          assetsFromLinking: const <EncodedAsset>[],
+          recordedUsesFile: recordedUsesFile.uri,
+        );
+      FontAssetsExtension().setupLinkInput(linkInputBuilder);
+      final linkInput = linkInputBuilder.build();
+
+      final linkOutputBuilder = LinkOutputBuilder();
+      await treeShakeFontAssets(linkInput, linkOutputBuilder);
+
+      final linkOutput = linkOutputBuilder.build();
+      final outputFonts = linkOutput.assets.encodedAssets
+          .map((e) => e.asFontAsset)
+          .toList();
+      expect(outputFonts, hasLength(1));
+      final shakenFont = outputFonts.single;
+      expect(shakenFont.family, 'MyIcons');
+      expect(shakenFont.name, 'fonts/MyIcons.ttf');
+      expect(shakenFont.package, 'my_pkg');
+
+      final shakenFile = File.fromUri(shakenFont.file);
+      expect(shakenFile.existsSync(), isTrue);
+      expect(shakenFile.lengthSync(), lessThan(fontFile.lengthSync()));
     });
   });
 }

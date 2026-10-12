@@ -10,3 +10,5 @@ export 'src/font_asset_base.dart'
         LinkFontAssetAdder,
         LinkOutputFontAssetsBuilder,
         fontAssetType;
+export 'src/tree_shaker.dart'
+    show FontTreeShakeException, parseIconDataRecordings, treeShakeFontAssets;

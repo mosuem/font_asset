@@ -1,3 +1,12 @@
+## 0.2.0
+
+- Add `hook/build.dart`, `hook/link.dart`, and `treeShakeFontAssets` powered by
+  `package:font_subset` (`^0.2.1`) and `package:record_use` (`^1.1.0`) to
+  tree-shake icon fonts directly inside `package:font_asset`'s link hook.
+- Add `treeShake: true` parameter to `addFont`, `addFontFamily`, and `FontFile`
+  to automatically route icon fonts to `ToLinkHook('font_asset')` when linking
+  is enabled.
+
 ## 0.1.0
 
 - **Breaking:** Upgrade to `hooks: ^2.0.0`.

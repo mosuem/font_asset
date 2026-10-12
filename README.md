@@ -27,6 +27,24 @@ void main(List<String> args) => build(args, (input, output) async {
 });
 ```
 
+For icon fonts that should be tree-shaken based on recorded `IconData` usages
+in release builds, pass `treeShake: true`:
+
+```dart
+addFont(
+  input,
+  output,
+  family: 'MyIcons',
+  filePath: 'fonts/MyIcons.otf',
+  treeShake: true,
+);
+```
+
+When `linkingEnabled` is `true`, `addFont(..., treeShake: true)` routes the
+font to `package:font_asset`'s `hook/link.dart`, which subsets it using
+[`package:font_subset`](https://pub.dev/packages/font_subset) and the compiler's
+recorded `IconData` usages.
+
 Fonts of a dependency package are available under the family name
 `packages/<package>/<family>`, fonts of the app itself under `<family>`.
 
