@@ -75,7 +75,7 @@ void main() {
 
   group('FontAsset', () {
     test('encodes and decodes with all fields and preserves file URI', () {
-      final fontFile = File('${tempDir.path}/Regular.ttf')
+      final fontFile = File.fromUri(tempDir.uri.resolve('Regular.ttf'))
         ..writeAsStringSync('ttf');
       final asset = FontAsset(
         file: fontFile.uri,
@@ -229,7 +229,7 @@ void main() {
       expect(font.style, 'normal');
       expect(
         font.file.toFilePath(),
-        File('${tempDir.path}/fonts/Regular.ttf').path,
+        File.fromUri(tempDir.uri.resolve('fonts/Regular.ttf')).path,
       );
       expect(output.dependencies, contains(font.file));
       expect(output.assets.encodedAssetsForLinking, isEmpty);
